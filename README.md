@@ -1,3 +1,5 @@
+inicio no terminal sudo nano script.sh
+
 1. Verifica se o Apache está instalado:
 if [ -x /etc/init.d/apache2 ]; then
 Essa linha verifica se o arquivo etc/init.d/apache2 é executável./
@@ -55,3 +57,6 @@ Cria o diretório para o site.
 Baixa e instala um site simples de HTML/CSS.
 Cria e ativa um virtual host no Apache.
 Configura o domínio local para acessar o site como http://ifrn/.
+
+para abniblitar sudo chmod +x script.sh
+executar ./script.sh
