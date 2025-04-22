@@ -59,4 +59,5 @@ Cria e ativa um virtual host no Apache.
 Configura o domínio local para acessar o site como http://ifrn/.
 
 para abniblitar sudo chmod +x script.sh
+
 executar ./script.sh
