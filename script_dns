@@ -1,0 +1,109 @@
+#!/bin/bash
+
+# IP e domínios
+DOMINIO="ifrn.com"
+IP="192.168.0.10"
+SUBDOMINIOS=("site1" "site2" "ivaldo")
+
+# Instalação do Apache
+if [ -x /etc/init.d/apache2 ]; then
+    echo "Apache não encontrado, iniciando a instalação..."
+    sudo apt-get update
+    sudo apt-get install apache2 -y
+else
+    echo "Você já possui um Apache instalado"
+fi
+
+# Criar diretório principal e configurar site
+sudo mkdir -p /var/www/$DOMINIO/public_html
+cd /var/www/$DOMINIO/public_html
+sudo git clone https://github.com/matheusmanuel/site-simples-com-html-e-css-.git 
+sudo cp -r site-simples-com-html-e-css-/* .
+sudo rm -rf site-simples-com-html-e-css-/
+
+# Configurar VirtualHost principal
+cd /etc/apache2/sites-available/
+sudo tee $DOMINIO.conf <<EOF
+<VirtualHost *:80>
+    ServerAdmin admin@$DOMINIO
+    ServerName $DOMINIO
+    ServerAlias www.$DOMINIO
+    DocumentRoot /var/www/$DOMINIO/public_html 
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+EOF
+
+# Criar subdomínios
+for SUB in "${SUBDOMINIOS[@]}"; do
+    sudo mkdir -p /var/www/$SUB.$DOMINIO/public_html
+    sudo tee /etc/apache2/sites-available/$SUB.$DOMINIO.conf <<EOF
+<VirtualHost *:80>
+    ServerAdmin admin@$SUB.$DOMINIO
+    ServerName $SUB.$DOMINIO
+    DocumentRoot /var/www/$SUB.$DOMINIO/public_html
+    ErrorLog \${APACHE_LOG_DIR}/$SUB-error.log
+    CustomLog \${APACHE_LOG_DIR}/$SUB-access.log combined
+</VirtualHost>
+EOF
+    sudo a2ensite $SUB.$DOMINIO.conf
+done
+
+sudo a2ensite $DOMINIO.conf
+sudo systemctl restart apache2
+
+# Configurar DNS (BIND9)
+echo "Instalando e configurando o servidor DNS..."
+sudo apt-get install bind9 -y
+
+# Configurar zona DNS
+sudo tee /etc/bind/named.conf.local <<EOF
+zone "$DOMINIO" {
+    type master;
+    file "/etc/bind/db.$DOMINIO";
+};
+EOF
+
+# Criar arquivo de zona
+sudo tee /etc/bind/db.$DOMINIO <<EOF
+\$TTL    604800
+@       IN      SOA     ns1.$DOMINIO. admin.$DOMINIO. (
+                  3     ; Serial
+             604800     ; Refresh
+              86400     ; Retry
+            2419200     ; Expire
+             604800 )   ; Negative Cache TTL
+;
+@       IN      NS      ns1.$DOMINIO.
+@       IN      A       $IP
+ns1     IN      A       $IP
+www     IN      CNAME   $DOMINIO.
+EOF
+
+# Adicionar subdomínios ao DNS
+for SUB in "${SUBDOMINIOS[@]}"; do
+    echo "$SUB     IN      A       $IP" | sudo tee -a /etc/bind/db.$DOMINIO
+done
+
+# Configurar resolv.conf
+sudo tee /etc/resolv.conf <<EOF
+nameserver $IP
+nameserver 8.8.8.8
+search $DOMINIO
+EOF
+
+# Adicionar entradas ao /etc/hosts
+echo "$IP $DOMINIO www.$DOMINIO" | sudo tee -a /etc/hosts
+for SUB in "${SUBDOMINIOS[@]}"; do
+    echo "$IP $SUB.$DOMINIO" | sudo tee -a /etc/hosts
+done
+
+# Reiniciar serviços
+sudo systemctl restart bind9
+sudo systemctl restart apache2
+sudo systemctl enable bind9
+
+echo "Configuração completa!"
+echo "Domínio principal: $DOMINIO"
+echo "Subdomínios configurados: ${SUBDOMINIOS[@]/%/.$DOMINIO}"
+echo "IP configurado: $IP"
