@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Variáveis
+DOMINIO="ifrn.com"
+SUBDOMINIOS=("site1" "site2" "ivaldo")
+BIND_ZONE="/etc/bind/db.$DOMINIO"
+NAMED_CONF="/etc/bind/named.conf.local"
+
+echo ">>> Removendo diretórios dos sites..."
+for SUB in "${SUBDOMINIOS[@]}"; do
+    DIR="/var/www/$SUB.$DOMINIO"
+    [ -d "$DIR" ] && sudo rm -rf "$DIR" && echo "Removido $DIR"
+done
+
+echo ">>> Removendo VirtualHosts do Apache..."
+cd /etc/apache2/sites-available/
+for SUB in "${SUBDOMINIOS[@]}"; do
+    CONF="$SUB.$DOMINIO.conf"
+    sudo a2dissite "$CONF" 2>/dev/null
+    sudo rm -f "$CONF" && echo "Removido $CONF"
+done
+
+echo ">>> Limpando entradas do /etc/hosts..."
+for SUB in "${SUBDOMINIOS[@]}"; do
+    sudo sed -i "/$SUB.$DOMINIO/d" /etc/hosts
+done
+sudo sed -i "/$DOMINIO/d" /etc/hosts
+
+echo ">>> Restaurando /etc/resolv.conf (Google DNS)..."
+sudo tee /etc/resolv.conf > /dev/null <<EOF
+nameserver 8.8.8.8
+EOF
+
+echo ">>> Removendo zona DNS do BIND9..."
+sudo rm -f "$BIND_ZONE"
+sudo sed -i "/zone \"$DOMINIO\" {/,/};/d" "$NAMED_CONF"
+
+echo ">>> Reiniciando serviços..."
+sudo systemctl reload apache2 2>/dev/null
+sudo systemctl reload bind9 2>/dev/null
+
+echo ">>> Removendo pacotes Apache2 e BIND9..."
+sudo apt-get purge -y apache2 bind9
+sudo apt-get autoremove --purge -y
+sudo apt-get autoclean
+
+echo ">>> Limpando diretórios de configuração residuais..."
+sudo rm -rf /etc/apache2 /etc/bind /var/www/* /var/log/apache2 /var/cache/apache2
+
+echo ">>> Finalizado. Sistema limpo como de fábrica (relativo ao script)."
