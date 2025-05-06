@@ -1,0 +1,124 @@
+Instalação da Rede Interna e Configuração do Servidor Apache2
+
+1. Atualizar o sistema
+
+
+sudo apt-get update
+
+
+2. Instalar o Apache2
+
+
+sudo apt-get install apache2
+
+
+3. Configurar os parâmetros do site
+
+Entrar no diretório raiz da web:
+
+
+cd /var/www/
+
+
+Criar o diretório do site:
+
+
+sudo mkdir -p ufrn/public_html
+cd ufrn/
+ls  # Para verificar o conteúdo
+
+
+Criar o arquivo `index.html`:
+
+
+sudo nano public_html/index.html
+
+
+Exemplo de conteúdo do `index.html`:
+
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site UFRN</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+        h1 { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Olá, bem-vindo ao site da UFRN</h1>
+    <script>
+        console.log("Bem-vindo ao editor avançado!");
+    </script>
+</body>
+</html>
+
+4. Configurar o Apache
+
+Acessar diretório de sites disponíveis:
+
+
+cd /etc/apache2/sites-available/
+
+
+Copiar o arquivo de configuração padrão:
+
+
+sudo cp 000-default.conf ufrn.conf
+
+
+Editar o novo arquivo de configuração:
+
+
+sudo nano ufrn.conf
+
+
+Exemplo de configuração (`ufrn.conf`):
+
+
+<VirtualHost *:80>
+    ServerAdmin admin@ufrn.com
+    ServerName ufrn.com
+    ServerAlias www.ufrn.com
+    DocumentRoot /var/www/ufrn/public_html
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+
+
+
+
+5. Habilitar e reiniciar o site
+
+Habilitar o novo site:
+
+
+sudo a2ensite ufrn.conf
+
+
+Desabilitar o site padrão:
+
+
+sudo a2dissite 000-default.conf
+
+
+ Reiniciar o Apache:
+
+bash
+sudo /etc/init.d/apache2 restart
+
+6. Configuração de Rede Cabeada
+IP: `192.168.0.11`
+Máscara de Sub-rede: `255.255.255.0`
+ Gateway: `192.168.0.1`
+DNS: `192.168.0.10`
+
+
+7. Finalização
+Desligue a máquina.
+Conecte-a à rede interna.
+
+
