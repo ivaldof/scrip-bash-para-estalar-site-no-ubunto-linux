@@ -1,63 +1,73 @@
-inicio no terminal sudo nano script.sh
+---
 
-1. Verifica se o Apache está instalado:
-if [ -x /etc/init.d/apache2 ]; then
-Essa linha verifica se o arquivo etc/init.d/apache2 é executável./
+# Script de Instalação e Configuração de Site com Apache2
 
-2. Se o Apache não for encontrado:
-echo "apache não encontrado, iniciando a instalação...."
-sudo apt-get update
-sudo apt-get install apache2 -y
-Atualiza os repositórios e instala o Apache.
+Este script automatiza a instalação do Apache2 e a configuração de um site simples hospedado localmente no Ubuntu/Debian.
 
-3. Se o Apache já estiver instalado:
-echo "você ja possui um apache instalado"
-4. Cria diretórios e clona o site:
-sudo mkdir -p /var/www/ifrn/public_html
-cd /var/www/ifrn/public_html
-sudo git clone https://github.com/matheusmanuel/site-simples-com-html-e-css-.git
-sudo cp -r site-simples-com-html-e-css-/* .
-sudo rm -rf site-simples-com-html-e-css-/
-Cria a pasta do site.
-Clona o repositório do GitHub.
-Copia os arquivos do site para a pasta principal.
-Remove a pasta do repositório clonado (limpeza).
-5. Cria um arquivo de configuração para o Apache:
-cd /etc/apache2/site-available/
-sudo tee ifrn.conf <<EOF
-<VirtualHost *:80>
-ServerAdmin admin@ifrn
-ServerName ifrn
-ServerAlias www.ifrn
-DocumentRoot /var/www/ifrn/public_html
-ErroLog ${APACHE_LOG_DIR}/error.log
-CustomLog ${APACHE_LOG_DIR}/access.log combined
-</VirtualHost>
-EOF
-Cria o virtual host ifrn.conf.
-Define onde está o conteúdo do site.
-Define logs.
-Erros aqui:
+## 📜 Descrição
 
-ErroLog → deveria ser ErrorLog.
-site-available → o correto é sites-available.
-6. Ativa o novo site e configura o hosts:
-sudo a2ensite ifrn.conf
-sudo echo "127.0.0.1 tfrn" | sudo tee -a /etc/hosts
-Ativa o site ifrn.conf.
-Adiciona o domínio tfrn no /etc/hosts (possível erro de digitação, o correto seria ifrn).
-7. Reinicia o Apache e mostra o status:
-sudo /etc/init.d/apache2 restart
-sudo /etc/init.d/apache2 status
-Reinicia o servidor Apache e mostra se está rodando.
+O script verifica se o Apache2 está instalado e, caso não esteja, realiza a instalação. Em seguida, cria uma estrutura de diretórios, clona um repositório com um site HTML/CSS, configura o Apache para servir esse site com um novo Virtual Host e atualiza o arquivo `/etc/hosts` para permitir o acesso via `http://ifrn`.
 
-Resumo da função do script:
-Verifica se o Apache está instalado (e instala, se necessário).
-Cria o diretório para o site.
-Baixa e instala um site simples de HTML/CSS.
-Cria e ativa um virtual host no Apache.
-Configura o domínio local para acessar o site como http://ifrn/.
+## ⚙️ Requisitos
 
-para abniblitar sudo chmod +x script.sh
+* Sistema baseado em Debian (Ubuntu, etc.)
+* Permissões de superusuário (`sudo`)
+* Git instalado
 
-executar ./script.sh
+## 🖥️ Etapas Executadas
+
+1. **Verifica se o Apache2 está instalado**
+2. **Instala o Apache2 caso não esteja presente**
+3. **Cria a estrutura de diretórios em `/var/www/ifrn/public_html`**
+4. **Clona o repositório do site HTML**
+5. **Move os arquivos clonados para o diretório do site**
+6. **Cria uma configuração de Virtual Host para o Apache**
+7. **Ativa o novo site**
+8. **Adiciona `127.0.0.1 ifrn` ao arquivo `/etc/hosts`**
+9. **Reinicia o serviço do Apache**
+
+## 💡 Como Usar
+
+```bash
+chmod +x install_apache_site.sh
+sudo ./install_apache_site.sh
+```
+
+## 📁 Estrutura Esperada
+
+Após a execução, os arquivos do site estarão disponíveis em:
+
+```
+/var/www/ifrn/public_html
+```
+
+A configuração do Apache será adicionada em:
+
+```
+/etc/apache2/sites-available/ifrn.conf
+```
+
+A entrada no arquivo `/etc/hosts` será:
+
+```
+127.0.0.1 ifrn
+```
+
+## 🌐 Acesso
+
+Após a execução bem-sucedida, abra o navegador e acesse:
+
+```
+http://ifrn
+```
+
+> 🔒 Dica: caso o navegador não resolva o domínio `ifrn`, certifique-se de que o `/etc/hosts` foi corretamente atualizado e que o Apache está rodando.
+
+## 🛠️ Possíveis Melhorias
+
+* Verificar se o Git está instalado antes de clonar
+* Validar se a configuração do Apache foi aplicada corretamente
+* Adicionar suporte a outros sistemas operacionais
+
+---
+
